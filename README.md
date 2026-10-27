@@ -1,0 +1,1 @@
+# ostt-worker-device-config
