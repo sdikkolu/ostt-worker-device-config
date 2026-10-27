@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSTT Worker Devices</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232a78d6'/%3E%3Crect x='7' y='9' width='18' height='11' rx='2' fill='white' opacity='0.92'/%3E%3Crect x='13' y='22' width='6' height='2' rx='1' fill='white' opacity='0.92'/%3E%3C/svg%3E">
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --surface-raised:  #ffffff;
+    --page-plane:     #f4f3f0;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --baseline:       #c3c2b7;
+    --border:         rgba(11,11,11,0.10);
+    --shadow:         0 1px 2px rgba(11,11,11,0.04), 0 4px 16px rgba(11,11,11,0.05);
+
+    --series-1:       #2a78d6; /* blue   - hyderabad-lab */
+    --series-2:       #eb6834; /* orange - cambridge-lab */
+    --series-3:       #1baf7a; /* aqua   - other lab */
+
+    --seq-400:        #3987e5;
+    --seq-450:        #2a78d6;
+    --seq-500:        #256abf;
+    --seq-550:        #1c5cab;
+
+    --brand-grad-a:   #2a78d6;
+    --brand-grad-b:   #1baf7a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --surface-raised: #212120;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --baseline:       #383835;
+      --border:         rgba(255,255,255,0.10);
+      --shadow:         0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.35);
+
+      --series-1:       #3987e5;
+      --series-2:       #d95926;
+      --series-3:       #199e70;
+
+      --seq-400:        #3987e5;
+      --seq-450:        #2a78d6;
+      --seq-500:        #1c5cab;
+      --seq-550:        #104281;
+
+      --brand-grad-a:   #3987e5;
+      --brand-grad-b:   #199e70;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1:      #1a1a19;
+    --surface-raised: #212120;
+    --page-plane:     #0d0d0d;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #898781;
+    --gridline:       #2c2c2a;
+    --baseline:       #383835;
+    --border:         rgba(255,255,255,0.10);
+    --shadow:         0 1px 2px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.35);
+
+    --series-1:       #3987e5;
+    --series-2:       #d95926;
+    --series-3:       #199e70;
+
+    --seq-400:        #3987e5;
+    --seq-450:        #2a78d6;
+    --seq-500:        #1c5cab;
+    --seq-550:        #104281;
+
+    --brand-grad-a:   #3987e5;
+    --brand-grad-b:   #199e70;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- Top bar ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 40;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 28px; background: var(--surface-1); border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 7px; flex: none;
+    background: linear-gradient(135deg, var(--brand-grad-a), var(--brand-grad-b));
+    display: flex; align-items: center; justify-content: center;
+  }
+  .brand-mark svg { width: 16px; height: 16px; }
+  .brand-name { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .brand-name .dim { color: var(--text-muted); font-weight: 500; }
+
+  .theme-toggle {
+    font: inherit; font-size: 13px; color: var(--text-secondary);
+    background: var(--page-plane); border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 12px; cursor: pointer;
+  }
+  .theme-toggle:hover { color: var(--text-primary); }
+
+  .page { max-width: 1180px; margin: 0 auto; padding: 36px 24px 64px; }
+
+  /* ---- Hero ---- */
+  .hero { margin-bottom: 28px; }
+  .hero h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.015em; margin: 0 0 6px; }
+  .hero p { color: var(--text-secondary); font-size: 14px; margin: 0; max-width: 640px; line-height: 1.5; }
+  .hero code { background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 12.5px; }
+
+  /* ---- Filter row ---- */
+  .filters {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    padding: 12px 14px; margin-bottom: 24px;
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+  .filters input[type="search"], .filters select {
+    font: inherit; font-size: 13px; color: var(--text-primary);
+    background: var(--page-plane); border: 1px solid var(--border);
+    border-radius: 7px; padding: 7px 10px;
+  }
+  .filters input[type="search"] { flex: 1 1 220px; min-width: 180px; }
+  .filters select { min-width: 150px; }
+  .filters .reset-btn {
+    font: inherit; font-size: 13px; color: var(--text-secondary);
+    background: transparent; border: 1px solid var(--border); border-radius: 7px;
+    padding: 7px 12px; cursor: pointer;
+  }
+  .filters .reset-btn:hover { color: var(--text-primary); }
+  .filter-count { font-size: 13px; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+
+  /* ---- KPI row ---- */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat-tile {
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px;
+    padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .stat-tile .label { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+  .stat-tile .value { font-size: 30px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
+
+  /* ---- Chart cards ---- */
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; align-items: start; }
+  @media (max-width: 860px) { .chart-grid { grid-template-columns: 1fr; } }
+  figure.chart-card {
+    margin: 0; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 22px; box-shadow: var(--shadow);
+  }
+  .chart-card .chart-title { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .chart-card .chart-caption { font-size: 12px; color: var(--text-muted); margin: 0 0 14px; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary);
+    background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px;
+  }
+  .legend-item[aria-pressed="false"] { opacity: 0.4; }
+  .legend-item:hover { color: var(--text-primary); }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; position: relative; }
+  .bar-row:last-child { margin-bottom: 0; }
+  .bar-label {
+    flex: 0 0 110px; font-size: 12px; color: var(--text-secondary);
+    text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .bar-track { flex: 1 1 auto; background: var(--gridline); border-radius: 4px; height: 20px; position: relative; }
+  .bar-fill {
+    height: 20px; border-radius: 4px; min-width: 4px;
+    transition: width 0.15s ease; cursor: pointer; outline: none;
+  }
+  .bar-fill:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+  .bar-fill.lifted { filter: brightness(1.08); }
+  .bar-value { flex: 0 0 34px; font-size: 12px; color: var(--text-secondary); }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 50;
+    background: var(--text-primary); color: var(--surface-1);
+    font-size: 12px; padding: 6px 10px; border-radius: 6px;
+    transform: translate(-50%, -100%); white-space: nowrap;
+    opacity: 0; transition: opacity 0.1s ease;
+  }
+  .tooltip.visible { opacity: 1; }
+  .tooltip strong { font-weight: 600; }
+
+  .empty-state { text-align: center; color: var(--text-muted); font-size: 13px; padding: 24px 0; }
+
+  /* ---- Table ---- */
+  .table-card {
+    background: var(--surface-raised); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 22px; box-shadow: var(--shadow);
+  }
+  .table-card .chart-title { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .table-card .chart-caption { font-size: 12px; color: var(--text-muted); margin: 0 0 14px; }
+  .table-scroll { overflow-x: auto; }
+  table.device-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.device-table th {
+    text-align: left; font-size: 12px; color: var(--text-muted); font-weight: 600;
+    padding: 8px 10px; border-bottom: 1px solid var(--gridline); cursor: pointer; user-select: none;
+    white-space: nowrap;
+  }
+  table.device-table th:hover { color: var(--text-primary); }
+  table.device-table th .sort-arrow { font-size: 10px; margin-left: 3px; color: var(--text-muted); }
+  table.device-table td {
+    padding: 8px 10px; border-bottom: 1px solid var(--gridline); color: var(--text-secondary);
+    vertical-align: top;
+  }
+  table.device-table tbody tr:hover td { background: var(--page-plane); }
+  table.device-table td.name-cell { color: var(--text-primary); font-weight: 500; }
+  .tag-chip {
+    display: inline-block; font-size: 11px; color: var(--text-secondary);
+    background: var(--page-plane); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1px 8px; margin: 1px 3px 1px 0;
+  }
+
+  .footer { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 28px; }
+</style>
+</head>
+<body>
+<div class="viz-root">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="5" width="18" height="11" rx="1.5" fill="white" opacity="0.95"/>
+          <rect x="9" y="18" width="6" height="2" rx="1" fill="white" opacity="0.95"/>
+        </svg>
+      </div>
+      <div class="brand-name">OSTT <span class="dim">Worker Devices</span></div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" type="button">Theme: System</button>
+  </div>
+
+  <div class="page">
+
+    <div class="hero">
+      <h1>Device lab overview</h1>
+      <p>A live-filterable inventory of every LAVA device across the test labs, parsed directly from <code>dispatcher-config/devices/*.jinja2</code>.</p>
+    </div>
+
+    <div class="filters">
+      <input type="search" id="searchInput" placeholder="Search name, type, worker, owner, tag..." aria-label="Search devices">
+      <select id="labFilter" aria-label="Filter by lab"></select>
+      <select id="typeFilter" aria-label="Filter by device type"></select>
+      <select id="ownerFilter" aria-label="Filter by physical owner"></select>
+      <button class="reset-btn" id="resetFilters" type="button">Reset</button>
+      <span class="filter-count" id="filterCount"></span>
+    </div>
+
+    <div class="kpi-row">
+      <div class="stat-tile"><div class="label">Total devices</div><div class="value" id="statTotal">—</div></div>
+      <div class="stat-tile"><div class="label">Device types</div><div class="value" id="statTypes">—</div></div>
+      <div class="stat-tile"><div class="label">Workers</div><div class="value" id="statWorkers">—</div></div>
+      <div class="stat-tile"><div class="label">Physical owners</div><div class="value" id="statOwners">—</div></div>
+    </div>
+
+    <div class="chart-grid">
+      <figure class="chart-card">
+        <p class="chart-title">Devices by lab</p>
+        <p class="chart-caption">Click a legend swatch to isolate a lab. Full detail in the table below.</p>
+        <div class="legend" id="labLegend"></div>
+        <div id="labChart"></div>
+      </figure>
+
+      <figure class="chart-card">
+        <p class="chart-title">Devices by type</p>
+        <p class="chart-caption" id="typeChartCaption"></p>
+        <div id="typeChart"></div>
+      </figure>
+    </div>
+
+    <div class="table-card">
+      <p class="chart-title">All devices</p>
+      <p class="chart-caption">Table view — the accessibility twin of both charts above. Click a column header to sort.</p>
+      <div class="table-scroll">
+      <table class="device-table" id="deviceTable">
+        <thead>
+          <tr>
+            <th data-key="name">Name<span class="sort-arrow"></span></th>
+            <th data-key="device_type">Device type<span class="sort-arrow"></span></th>
+            <th data-key="worker">Worker<span class="sort-arrow"></span></th>
+            <th data-key="lab">Lab<span class="sort-arrow"></span></th>
+            <th data-key="physical_owner">Owner<span class="sort-arrow"></span></th>
+            <th>Tags</th>
+          </tr>
+        </thead>
+        <tbody id="deviceTableBody"></tbody>
+      </table>
+      </div>
+      <div class="empty-state" id="tableEmptyState" style="display:none;">No devices match the current filters.</div>
+    </div>
+
+    <p class="footer">Generated from lava-dispatcher-config &middot; <span id="footerCount"></span> devices indexed</p>
+
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
+
+<script>
+const RAW_DEVICES = /*__DEVICES_JSON__*/[{"name": "amd-ryzen-01", "device_type": "intel-corei7-64", "worker": "nuc-worker-10", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "db410c-01", "device_type": "dragonboard-410c", "worker": "nuc-worker-25", "tags": ["cambridge-lab", "allow-remote-access"], "aliases": [], "physical_owner": "milosz"}, {"name": "db410c-02", "device_type": "dragonboard-410c", "worker": "nuc-worker-26", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "db410c-03", "device_type": "dragonboard-410c", "worker": "nuc-worker-32", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "db820c-01", "device_type": "dragonboard-820c", "worker": "nuc-worker-25", "tags": ["cambridge-lab", "allow-remote-access"], "aliases": [], "physical_owner": "milosz"}, {"name": "db820c-02", "device_type": "dragonboard-820c", "worker": "nuc-worker-13", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "db820c-03", "device_type": "dragonboard-820c", "worker": "nuc-worker-25", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "docker-01", "device_type": "docker", "worker": "nuc-worker-12", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "glymur-hyd-02", "device_type": "glymur-crd", "worker": "ostt-lts-hyd-09", "tags": ["hyderabad-lab", "has-bt", "display", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "glymur-hyd-03", "device_type": "glymur-crd", "worker": "hyd-worker-20", "tags": ["hyderabad-lab", "has-bt", "display", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "glymur-hyd-04", "device_type": "glymur-crd", "worker": "hyd-worker-01", "tags": ["hyderabad-lab", "has-bt", "display", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "glymur-hyd-05", "device_type": "glymur-crd", "worker": "hyd-worker-03", "tags": ["hyderabad-lab", "has-bt", "display", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "glymur-hyd-06", "device_type": "glymur-crd", "worker": "ostt-lts-hyd-03", "tags": ["hyderabad-lab", "has-bt", "display", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "glymur-hyd-07", "device_type": "glymur-crd", "worker": "ostt-lts-hyd-04", "tags": ["hyderabad-lab", "has-bt", "display", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "hamoa-iot-evk-01", "device_type": "hamoa-iot-evk", "worker": "nuc-worker-16", "tags": ["cambridge-lab", "has-bt", "allow-remote-access", "pvt"], "aliases": ["iq-x7181-evk"], "physical_owner": "milosz"}, {"name": "hamoa-iot-evk-02", "device_type": "hamoa-iot-evk", "worker": "nuc-worker-17", "tags": ["cambridge-lab", "has-bt", "pvt"], "aliases": ["iq-x7181-evk"], "physical_owner": "milosz"}, {"name": "hamoa-iot-evk-03", "device_type": "hamoa-iot-evk", "worker": "nuc-worker-20", "tags": ["cambridge-lab", "has-bt", "pvt"], "aliases": ["iq-x7181-evk"], "physical_owner": "milosz"}, {"name": "hamoa-iot-evk-04", "device_type": "hamoa-iot-evk", "worker": "hyd-worker-04", "tags": ["hyderabad-lab", "display"], "aliases": ["iq-x7181-evk"], "physical_owner": "nkambo"}, {"name": "hamoa-iot-evk-05", "device_type": "hamoa-iot-evk", "worker": "hyd-worker-10", "tags": ["hyderabad-lab"], "aliases": ["iq-x7181-evk"], "physical_owner": "nkambo"}, {"name": "hamoa-iot-evk-06", "device_type": "hamoa-iot-evk", "worker": "ostt-lts-hyd-09", "tags": ["hyderabad-lab"], "aliases": ["iq-x7181-evk"], "physical_owner": "nkambo"}, {"name": "hamoa-iot-evk-07", "device_type": "hamoa-iot-evk", "worker": "ostt-lts-hyd-05", "tags": ["hyderabad-lab"], "aliases": ["iq-x7181-evk"], "physical_owner": "nkambo"}, {"name": "hamoa-iot-evk-08", "device_type": "hamoa-iot-evk", "worker": "ostt-lts-hyd-12", "tags": ["hyderabad-lab", "pvt"], "aliases": ["iq-x7181-evk"], "physical_owner": "nkambo"}, {"name": "hamoa-iot-evk-09", "device_type": "hamoa-iot-evk", "worker": "ostt-lts-hyd-14", "tags": ["hyderabad-lab", "pvt"], "aliases": ["iq-x7181-evk"], "physical_owner": "nkambo"}, {"name": "ifc6410-01", "device_type": "ifc6410", "worker": "nuc-worker-25", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "kaanapali-mtp-02", "device_type": "kaanapali-mtp", "worker": "hyd-worker-18", "tags": ["has-bt", "has-camera", "display", "hyderabad-lab"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "kaanapali-mtp-03", "device_type": "kaanapali-mtp", "worker": "hyd-worker-19", "tags": ["has-bt", "has-camera", "display", "hyderabad-lab"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "kaanapali-mtp-04", "device_type": "kaanapali-mtp", "worker": "hyd-worker-20", "tags": ["has-bt", "has-camera", "display", "hyderabad-lab"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "kaanapali-mtp-05", "device_type": "kaanapali-mtp", "worker": "ostt-lts-hyd-04", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "kaanapali-mtp-06", "device_type": "kaanapali-mtp", "worker": "ostt-lts-hyd-06", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "kaanapali-mtp-07", "device_type": "kaanapali-mtp", "worker": "hyd-worker-25", "tags": ["has-bt", "has-camera", "display", "hyderabad-lab"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "kaanapali-mtp-08", "device_type": "kaanapali-mtp", "worker": "ostt-lts-hyd-14", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "kaanapali-mtp-09", "device_type": "kaanapali-mtp", "worker": "ostt-lts-hyd-05", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": ["sm8850"], "physical_owner": "nkambo"}, {"name": "lemans-01", "device_type": "qcs9100-ride", "worker": "nuc-worker-21", "tags": ["cambridge-lab", "has-bt", "allow-remote-access"], "aliases": ["qcm9100", "qcs9100-ride-sx", "qcs9100-ride-r3"], "physical_owner": "milosz"}, {"name": "lemans-02", "device_type": "qcs9100-ride", "worker": "nuc-worker-18", "tags": ["cambridge-lab", "has-bt"], "aliases": ["qcm9100", "qcs9100-ride-sx", "qcs9100-ride-r3"], "physical_owner": "milosz"}, {"name": "lemans-03", "device_type": "qcs9100-ride", "worker": "tbaker-worker-01", "tags": ["tbaker", "has-bt"], "aliases": ["qcm9100", "qcs9100-ride-sx", "qcs9100-ride-r3"], "physical_owner": "tbaker"}, {"name": "lemans-hyd-01", "device_type": "qcs9100-ride", "worker": "hyd-worker-03", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["qcm9100", "qcs9100-ride-sx", "qcs9100-ride-r3"], "physical_owner": "nkambo"}, {"name": "pakala-hyd-02", "device_type": "sm8750-mtp", "worker": "hyd-worker-19", "tags": ["hyderabad-lab", "has-bt", "has-camera", "display"], "aliases": ["pakala-mtp"], "physical_owner": "nkambo"}, {"name": "pakala-hyd-03", "device_type": "sm8750-mtp", "worker": "hyd-worker-18", "tags": ["hyderabad-lab", "has-bt", "has-camera", "display"], "aliases": ["pakala-mtp"], "physical_owner": "nkambo"}, {"name": "pakala-hyd-04", "device_type": "sm8750-mtp", "worker": "hyd-worker-25", "tags": ["hyderabad-lab", "has-bt", "has-camera", "display"], "aliases": ["pakala-mtp"], "physical_owner": "nkambo"}, {"name": "pakala-hyd-06", "device_type": "sm8750-mtp", "worker": "hyd-worker-24", "tags": ["hyderabad-lab", "has-bt", "has-camera", "display"], "aliases": ["pakala-mtp"], "physical_owner": "nkambo"}, {"name": "portenta-x8-01", "device_type": "portenta-x8", "worker": "nuc-worker-13", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "portenta-x8-02", "device_type": "portenta-x8", "worker": "nuc-worker-13", "tags": ["cambridge-lab"], "aliases": [], "physical_owner": "milosz"}, {"name": "qcs615-adp-air-01", "device_type": "qcs615-ride", "worker": "nuc-worker-19", "tags": ["has-bt", "cambridge-lab", "display", "allow-remote-access"], "aliases": ["qcs615-ride-sx"], "physical_owner": "milosz"}, {"name": "qcs615-adp-air-02", "device_type": "qcs615-ride", "worker": "hyd-worker-01", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["qcs615-ride-sx"], "physical_owner": "nkambo"}, {"name": "qcs615-adp-air-03", "device_type": "qcs615-ride", "worker": "nuc-worker-32", "tags": ["has-bt", "cambridge-lab", "display"], "aliases": ["qcs615-ride-sx"], "physical_owner": "milosz"}, {"name": "qcs615-adp-air-05", "device_type": "qcs615-ride", "worker": "ostt-lts-hyd-03", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["qcs615-ride-sx"], "physical_owner": "nkambo"}, {"name": "qcs615-adp-air-06", "device_type": "qcs615-ride", "worker": "ostt-lts-hyd-11", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["qcs615-ride-sx"], "physical_owner": "nkambo"}, {"name": "qcs8300-ride-01", "device_type": "monaco-ride", "worker": "nuc-worker-19", "tags": ["cambridge-lab", "has-bt", "allow-remote-access"], "aliases": ["qcs8300-ride-sx"], "physical_owner": "milosz"}, {"name": "qcs8300-ride-hyd-01", "device_type": "monaco-ride", "worker": "hyd-worker-08", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["qcs8300-ride-sx"], "physical_owner": "nkambo"}, {"name": "qcs8300-ride-hyd-02", "device_type": "monaco-ride", "worker": "hyd-worker-14", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["qcs8300-ride-sx"], "physical_owner": "nkambo"}, {"name": "qemu-02", "device_type": "qemu", "worker": "nuc-worker-01", "tags": ["cambridge-lab", "allow-remote-access"], "aliases": ["qemuarm64-secureboot"], "physical_owner": ""}, {"name": "qemu-03", "device_type": "qemu", "worker": "nuc-worker-02", "tags": ["cambridge-lab"], "aliases": ["qemuarm64-secureboot"], "physical_owner": ""}, {"name": "qemu-04", "device_type": "qemu", "worker": "nuc-worker-03", "tags": ["cambridge-lab"], "aliases": ["qemuarm64-secureboot"], "physical_owner": ""}, {"name": "qemu-06", "device_type": "qemu", "worker": "nuc-worker-05", "tags": ["cambridge-lab"], "aliases": ["qemuarm64-secureboot"], "physical_owner": ""}, {"name": "qemu-07", "device_type": "qemu", "worker": "nuc-worker-09", "tags": ["cambridge-lab"], "aliases": ["qemuarm64-secureboot"], "physical_owner": ""}, {"name": "qemu-hyd-01", "device_type": "qemu", "worker": "hyd-worker-01", "tags": [], "aliases": ["qemuarm64-secureboot"], "physical_owner": ""}, {"name": "qemu-hyd-02", "device_type": "qemu", "worker": "hyd-worker-07", "tags": [], "aliases": ["qemuarm64-secureboot"], "physical_owner": ""}, {"name": "rb1-01", "device_type": "qrb2210-rb1", "worker": "nuc-worker-24", "tags": ["cambridge-lab", "mesa-ci", "display", "has-bt", "ephemeral-wifi", "allow-remote-access"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb1-02", "device_type": "qrb2210-rb1", "worker": "nuc-worker-26", "tags": ["cambridge-lab", "mesa-ci", "display", "has-bt"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb1-03", "device_type": "qrb2210-rb1", "worker": "nuc-worker-27", "tags": ["cambridge-lab", "mesa-ci", "display", "has-bt"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb1-04", "device_type": "qrb2210-rb1", "worker": "nuc-worker-29", "tags": ["cambridge-lab", "mesa-ci", "display", "has-bt"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb1-05", "device_type": "qrb2210-rb1", "worker": "nuc-worker-29", "tags": ["cambridge-lab", "display", "has-bt"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb1-06", "device_type": "qrb2210-rb1", "worker": "nuc-worker-30", "tags": ["cambridge-lab", "display", "has-bt"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb1-07", "device_type": "qrb2210-rb1", "worker": "nuc-worker-30", "tags": ["cambridge-lab", "display", "has-bt"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb1-08", "device_type": "qrb2210-rb1", "worker": "nuc-worker-05", "tags": ["cambridge-lab", "has-bt"], "aliases": ["qrb2210-rb1-core-kit", "rb1-core-kit"], "physical_owner": "milosz"}, {"name": "rb3g2-01", "device_type": "qcs6490-rb3gen2", "worker": "nuc-worker-16", "tags": ["cambridge-lab", "display", "has-bt", "allow-remote-access"], "aliases": ["qcm6490", "qcs6490-rb3gen2-vision-kit", "qcs6490-rb3gen2-core-kit", "rb3gen2-core-kit"], "physical_owner": "milosz"}, {"name": "rb3g2-03", "device_type": "qcs6490-rb3gen2", "worker": "nuc-worker-23", "tags": ["cambridge-lab", "display", "has-bt"], "aliases": ["qcm6490", "qcs6490-rb3gen2-vision-kit", "qcs6490-rb3gen2-core-kit", "rb3gen2-core-kit"], "physical_owner": "milosz"}, {"name": "rb3g2-dag01", "device_type": "qcs6490-rb3gen2", "worker": "nuc-worker-dgriego01", "tags": ["david-lab", "display", "camera", "has-camera"], "aliases": ["qcm6490", "qcs6490-rb3gen2-vision-kit", "qcs6490-rb3gen2-core-kit", "rb3gen2-core-kit"], "physical_owner": ""}, {"name": "rb3g2-hyd-01", "device_type": "qcs6490-rb3gen2", "worker": "hyd-worker-05", "tags": ["hyderabad-lab", "display", "camera", "has-camera", "has-bt"], "aliases": ["qcm6490", "qcs6490-rb3gen2-vision-kit", "qcs6490-rb3gen2-core-kit", "rb3gen2-core-kit"], "physical_owner": "nkambo"}, {"name": "rb3g2-hyd-02", "device_type": "qcs6490-rb3gen2", "worker": "hyd-worker-06", "tags": ["hyderabad-lab", "display", "has-camera", "has-bt"], "aliases": ["qcm6490", "qcs6490-rb3gen2-vision-kit", "qcs6490-rb3gen2-core-kit", "rb3gen2-core-kit"], "physical_owner": "nkambo"}, {"name": "rb3g2-hyd-04", "device_type": "qcs6490-rb3gen2", "worker": "ostt-lts-hyd-03", "tags": ["hyderabad-lab", "has-bt"], "aliases": ["qcm6490", "qcs6490-rb3gen2-core-kit", "rb3gen2-core-kit"], "physical_owner": "nkambo"}, {"name": "rb3g2-hyd-05", "device_type": "qcs6490-rb3gen2", "worker": "ostt-lts-hyd-04", "tags": ["hyderabad-lab", "display", "camera", "has-camera", "has-bt"], "aliases": ["qcm6490", "qcs6490-rb3gen2-vision-kit", "qcs6490-rb3gen2-core-kit", "rb3gen2-core-kit"], "physical_owner": "nkambo"}, {"name": "rb3g2-lite-01", "device_type": "qcs5430-rb3gen2-lite", "worker": "nuc-worker-15", "tags": ["cambridge-lab", "lite", "has-bt", "allow-remote-access"], "aliases": ["qcm5430", "qcs5430-rb3gen2-lite-core-kit", "rb3gen2-lite-core-kit"], "physical_owner": "milosz"}, {"name": "rb3g2-lite-02", "device_type": "qcs5430-rb3gen2-lite", "worker": "nuc-worker-11", "tags": ["cambridge-lab", "lite", "has-bt"], "aliases": ["qcm5430", "qcs5430-rb3gen2-lite-core-kit", "rb3gen2-lite-core-kit"], "physical_owner": "milosz"}, {"name": "rb3g2-lite-03", "device_type": "qcs5430-rb3gen2-lite", "worker": "nuc-worker-20", "tags": ["cambridge-lab", "lite", "camera", "has-bt"], "aliases": ["qcm5430", "qcs5430-rb3gen2-lite-vision-kit", "qcs5430-rb3gen2-lite-core-kit", "rb3gen2-lite-core-kit"], "physical_owner": "milosz"}, {"name": "rb4-hyd-01", "device_type": "monaco-evk", "worker": "hyd-worker-24", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["iq-8275-evk", "monaco-iot"], "physical_owner": "nkambo"}, {"name": "rb4-hyd-02", "device_type": "monaco-evk", "worker": "hyd-worker-23", "tags": ["hyderabad-lab", "display", "has-bt"], "aliases": ["iq-8275-evk", "monaco-iot"], "physical_owner": "nkambo"}, {"name": "rb4-hyd-03", "device_type": "monaco-evk", "worker": "hyd-worker-22", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": ["iq-8275-evk", "monaco-iot"], "physical_owner": "nkambo"}, {"name": "rb4-hyd-04", "device_type": "monaco-evk", "worker": "ostt-lts-hyd-01", "tags": ["hyderabad-lab", "has-bt"], "aliases": ["iq-8275-evk", "monaco-iot"], "physical_owner": "nkambo"}, {"name": "rb4-hyd-05", "device_type": "monaco-evk", "worker": "ostt-lts-hyd-02", "tags": ["hyderabad-lab", "has-bt"], "aliases": ["iq-8275-evk", "monaco-iot"], "physical_owner": "nkambo"}, {"name": "rb8-01", "device_type": "lemans-evk", "worker": "tbaker-worker-01", "tags": [], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "tbaker"}, {"name": "rb8-02", "device_type": "lemans-evk", "worker": "nuc-worker-21", "tags": ["pvt", "has-bt", "cambridge-lab"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "milosz"}, {"name": "rb8-03", "device_type": "lemans-evk", "worker": "nuc-worker-18", "tags": ["pvt", "has-bt", "cambridge-lab", "allow-remote-access"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "milosz"}, {"name": "rb8-hyd-01", "device_type": "lemans-evk", "worker": "hyd-worker-07", "tags": ["hyderabad-lab"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "nkambo"}, {"name": "rb8-hyd-02", "device_type": "lemans-evk", "worker": "hyd-worker-11", "tags": ["hyderabad-lab", "display", "camera", "has-camera", "has-bt", "pvt"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "nkambo"}, {"name": "rb8-hyd-03", "device_type": "lemans-evk", "worker": "hyd-worker-17", "tags": ["hyderabad-lab", "display", "camera", "has-camera", "has-bt", "pvt"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "nkambo"}, {"name": "rb8-hyd-06", "device_type": "lemans-evk", "worker": "ostt-lts-hyd-06", "tags": ["hyderabad-lab", "display", "has-bt", "pvt"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "nkambo"}, {"name": "rb8-hyd-07", "device_type": "lemans-evk", "worker": "ostt-lts-hyd-07", "tags": ["hyderabad-lab", "display", "has-bt", "pvt"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "nkambo"}, {"name": "rb8-hyd-08", "device_type": "lemans-evk", "worker": "ostt-lts-hyd-08", "tags": ["hyderabad-lab", "display", "has-bt", "pvt"], "aliases": ["qcs9075-rb8-core-kit", "qcs9075-iq-9075-evk", "iq-9075-evk", "qcs9100-rb8"], "physical_owner": "nkambo"}, {"name": "rpi-01", "device_type": "bcm2711-rpi-4-b", "worker": "nuc-worker-28", "tags": ["cambridge-lab"], "aliases": ["raspberrypi4-64"], "physical_owner": "milosz"}, {"name": "rpi-02", "device_type": "bcm2711-rpi-4-b", "worker": "nuc-worker-26", "tags": ["cambridge-lab"], "aliases": ["raspberrypi4-64"], "physical_owner": "milosz"}, {"name": "rpi5-01", "device_type": "bcm2712-rpi-5-b", "worker": "nuc-worker-15", "tags": ["cambridge-lab"], "aliases": ["raspberrypi5"], "physical_owner": "milosz"}, {"name": "shikra-hyd-02", "device_type": "shikra-iqs-evk", "worker": "hyd-worker-12", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "shikra-hyd-03", "device_type": "shikra-iqs-evk", "worker": "hyd-worker-15", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "shikra-hyd-04", "device_type": "shikra-iqs-evk", "worker": "hyd-worker-16", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "shikra-hyd-05", "device_type": "shikra-iqs-evk", "worker": "ostt-lts-hyd-01", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "shikra-hyd-06", "device_type": "shikra-iqs-evk", "worker": "ostt-lts-hyd-11", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "shikra-hyd-07", "device_type": "shikra-iqs-evk", "worker": "hyd-worker-09", "tags": ["hyderabad-lab", "display", "has-bt", "has-camera"], "aliases": [], "physical_owner": "nkambo"}, {"name": "unoq-01", "device_type": "qrb2210-arduino-imola", "worker": "nuc-worker-27", "tags": ["has-bt", "ephemeral-wifi", "cambridge-lab", "allow-remote-access", "2gb"], "aliases": [], "physical_owner": "milosz"}, {"name": "unoq-02", "device_type": "qrb2210-arduino-imola", "worker": "nuc-worker-27", "tags": ["has-bt", "ephemeral-wifi", "cambridge-lab", "2gb"], "aliases": [], "physical_owner": "milosz"}, {"name": "unoq-03", "device_type": "qrb2210-arduino-imola", "worker": "nuc-worker-13", "tags": ["has-bt", "ephemeral-wifi", "cambridge-lab", "allow-remote-access", "4gb"], "aliases": [], "physical_owner": "milosz"}, {"name": "unoq-04", "device_type": "qrb2210-arduino-imola", "worker": "ostt-lts-hyd-01", "tags": ["has-bt", "4gb"], "aliases": [], "physical_owner": "nkambo"}, {"name": "unoq-05", "device_type": "qrb2210-arduino-imola", "worker": "ostt-lts-hyd-02", "tags": ["has-bt", "4gb"], "aliases": [], "physical_owner": "nkambo"}, {"name": "ventunoq-01", "device_type": "monaco-arduino-monza", "worker": "nuc-worker-12", "tags": ["cambridge-lab", "allow-remote-access"], "aliases": ["ventunoq"], "physical_owner": "mattface"}, {"name": "ventunoq-matthart-production-01", "device_type": "monaco-arduino-monza", "worker": "nuc-worker-matthart-production-01", "tags": ["matthart-lab"], "aliases": ["ventunoq"], "physical_owner": "mattface"}]/*__END_DEVICES_JSON__*/;
+
+const MAIN_LABS = ['hyderabad-lab', 'cambridge-lab'];
+
+function labOf(device) {
+  const tag = device.tags.find(t => t.endsWith('-lab'));
+  if (!tag) return 'Other';
+  if (MAIN_LABS.includes(tag)) return tag.replace('-lab', '').replace(/^./, c => c.toUpperCase());
+  return 'Other';
+}
+
+const DEVICES = RAW_DEVICES.map(d => ({ ...d, lab: labOf(d) }));
+
+const LAB_COLORS = { 'Hyderabad': 'var(--series-1)', 'Cambridge': 'var(--series-2)', 'Other': 'var(--series-3)' };
+const LAB_ORDER = ['Hyderabad', 'Cambridge', 'Other'];
+
+const el = id => document.getElementById(id);
+const tooltip = el('tooltip');
+
+function showTooltip(target, html) {
+  const rect = target.getBoundingClientRect();
+  tooltip.innerHTML = html;
+  tooltip.style.left = (rect.left + rect.width / 2) + 'px';
+  tooltip.style.top = (rect.top - 8) + 'px';
+  tooltip.classList.add('visible');
+}
+function hideTooltip() { tooltip.classList.remove('visible'); }
+
+/* ---------------- Theme toggle ---------------- */
+const THEME_KEY = 'ostt-worker-devices-theme';
+function applyTheme(mode) {
+  if (mode === 'system') {
+    document.documentElement.removeAttribute('data-theme');
+  } else {
+    document.documentElement.setAttribute('data-theme', mode);
+  }
+  el('themeToggle').textContent = 'Theme: ' + mode.charAt(0).toUpperCase() + mode.slice(1);
+}
+let currentTheme = localStorage.getItem(THEME_KEY) || 'system';
+applyTheme(currentTheme);
+el('themeToggle').addEventListener('click', () => {
+  currentTheme = currentTheme === 'system' ? 'light' : currentTheme === 'light' ? 'dark' : 'system';
+  localStorage.setItem(THEME_KEY, currentTheme);
+  applyTheme(currentTheme);
+});
+
+/* ---------------- Filter state ---------------- */
+const state = { search: '', lab: '', type: '', owner: '', isolatedLab: null, sortKey: 'name', sortDir: 1 };
+
+function populateSelect(selectEl, values, placeholder) {
+  selectEl.innerHTML = '';
+  const opt0 = document.createElement('option');
+  opt0.value = ''; opt0.textContent = placeholder;
+  selectEl.appendChild(opt0);
+  values.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = v; opt.textContent = v;
+    selectEl.appendChild(opt);
+  });
+}
+populateSelect(el('labFilter'), LAB_ORDER, 'All labs');
+populateSelect(el('typeFilter'), [...new Set(DEVICES.map(d => d.device_type))].sort(), 'All device types');
+populateSelect(el('ownerFilter'), [...new Set(DEVICES.map(d => d.physical_owner).filter(Boolean))].sort(), 'All owners');
+
+el('searchInput').addEventListener('input', e => { state.search = e.target.value.trim().toLowerCase(); render(); });
+el('labFilter').addEventListener('change', e => { state.lab = e.target.value; state.isolatedLab = null; render(); });
+el('typeFilter').addEventListener('change', e => { state.type = e.target.value; render(); });
+el('ownerFilter').addEventListener('change', e => { state.owner = e.target.value; render(); });
+el('resetFilters').addEventListener('click', () => {
+  state.search = ''; state.lab = ''; state.type = ''; state.owner = ''; state.isolatedLab = null;
+  el('searchInput').value = ''; el('labFilter').value = ''; el('typeFilter').value = ''; el('ownerFilter').value = '';
+  render();
+});
+
+function getFiltered() {
+  return DEVICES.filter(d => {
+    if (state.isolatedLab && d.lab !== state.isolatedLab) return false;
+    if (state.lab && d.lab !== state.lab) return false;
+    if (state.type && d.device_type !== state.type) return false;
+    if (state.owner && d.physical_owner !== state.owner) return false;
+    if (state.search) {
+      const hay = [d.name, d.device_type, d.worker, d.physical_owner, ...d.tags, ...d.aliases].join(' ').toLowerCase();
+      if (!hay.includes(state.search)) return false;
+    }
+    return true;
+  });
+}
+
+/* ---------------- Lab chart (categorical) ---------------- */
+function renderLabLegend() {
+  const legend = el('labLegend');
+  legend.innerHTML = '';
+  LAB_ORDER.forEach(lab => {
+    const btn = document.createElement('button');
+    btn.className = 'legend-item';
+    btn.setAttribute('aria-pressed', state.isolatedLab === null || state.isolatedLab === lab ? 'true' : 'false');
+    const swatch = document.createElement('span');
+    swatch.className = 'legend-swatch';
+    swatch.style.background = LAB_COLORS[lab];
+    btn.appendChild(swatch);
+    btn.appendChild(document.createTextNode(lab));
+    btn.addEventListener('click', () => {
+      state.isolatedLab = state.isolatedLab === lab ? null : lab;
+      render();
+    });
+    legend.appendChild(btn);
+  });
+}
+
+function renderLabChart(filtered) {
+  const counts = {};
+  LAB_ORDER.forEach(l => counts[l] = 0);
+  filtered.forEach(d => { counts[d.lab] = (counts[d.lab] || 0) + 1; });
+  const max = Math.max(1, ...Object.values(counts));
+  const container = el('labChart');
+  container.innerHTML = '';
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="empty-state">No devices match the current filters.</div>';
+    return;
+  }
+  LAB_ORDER.forEach(lab => {
+    const count = counts[lab];
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    label.textContent = lab;
+    const track = document.createElement('div');
+    track.className = 'bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    fill.style.width = Math.max(1, (count / max) * 100) + '%';
+    fill.style.background = LAB_COLORS[lab];
+    fill.tabIndex = 0;
+    fill.addEventListener('mouseenter', () => { fill.classList.add('lifted'); showTooltip(fill, `<strong>${count}</strong> devices &middot; ${lab}`); });
+    fill.addEventListener('mouseleave', () => { fill.classList.remove('lifted'); hideTooltip(); });
+    fill.addEventListener('focus', () => { fill.classList.add('lifted'); showTooltip(fill, `<strong>${count}</strong> devices &middot; ${lab}`); });
+    fill.addEventListener('blur', () => { fill.classList.remove('lifted'); hideTooltip(); });
+    track.appendChild(fill);
+    const value = document.createElement('div');
+    value.className = 'bar-value';
+    value.textContent = count;
+    row.appendChild(label); row.appendChild(track); row.appendChild(value);
+    container.appendChild(row);
+  });
+}
+
+/* ---------------- Type chart (sequential) ---------------- */
+const TYPE_CHART_LIMIT = 15;
+function renderTypeChart(filtered) {
+  const counts = {};
+  filtered.forEach(d => { counts[d.device_type] = (counts[d.device_type] || 0) + 1; });
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const shown = entries.slice(0, TYPE_CHART_LIMIT);
+  const hiddenCount = entries.length - shown.length;
+  el('typeChartCaption').textContent = hiddenCount > 0
+    ? `Top ${TYPE_CHART_LIMIT} of ${entries.length} types shown, by count. Remaining ${hiddenCount} types are in the table below.`
+    : `All ${entries.length} device types shown, by count.`;
+  const container = el('typeChart');
+  container.innerHTML = '';
+  if (shown.length === 0) {
+    container.innerHTML = '<div class="empty-state">No devices match the current filters.</div>';
+    return;
+  }
+  const max = Math.max(1, ...shown.map(e => e[1]));
+  shown.forEach(([type, count]) => {
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    label.textContent = type;
+    label.title = type;
+    const track = document.createElement('div');
+    track.className = 'bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    fill.style.width = Math.max(1, (count / max) * 100) + '%';
+    fill.style.background = 'var(--seq-450)';
+    fill.tabIndex = 0;
+    fill.addEventListener('mouseenter', () => { fill.classList.add('lifted'); showTooltip(fill, `<strong>${count}</strong> devices &middot; ${type}`); });
+    fill.addEventListener('mouseleave', () => { fill.classList.remove('lifted'); hideTooltip(); });
+    fill.addEventListener('focus', () => { fill.classList.add('lifted'); showTooltip(fill, `<strong>${count}</strong> devices &middot; ${type}`); });
+    fill.addEventListener('blur', () => { fill.classList.remove('lifted'); hideTooltip(); });
+    track.appendChild(fill);
+    const value = document.createElement('div');
+    value.className = 'bar-value';
+    value.textContent = count;
+    row.appendChild(label); row.appendChild(track); row.appendChild(value);
+    container.appendChild(row);
+  });
+}
+
+/* ---------------- Table ---------------- */
+function renderTable(filtered) {
+  const rows = [...filtered].sort((a, b) => {
+    const av = (a[state.sortKey] || '').toString().toLowerCase();
+    const bv = (b[state.sortKey] || '').toString().toLowerCase();
+    return av < bv ? -state.sortDir : av > bv ? state.sortDir : 0;
+  });
+  const tbody = el('deviceTableBody');
+  tbody.innerHTML = '';
+  rows.forEach(d => {
+    const tr = document.createElement('tr');
+    const nameTd = document.createElement('td');
+    nameTd.className = 'name-cell';
+    nameTd.textContent = d.name;
+    tr.appendChild(nameTd);
+    ['device_type', 'worker', 'lab', 'physical_owner'].forEach(key => {
+      const td = document.createElement('td');
+      td.textContent = d[key] || '—';
+      tr.appendChild(td);
+    });
+    const tagsTd = document.createElement('td');
+    [...d.tags, ...d.aliases].forEach(tag => {
+      const chip = document.createElement('span');
+      chip.className = 'tag-chip';
+      chip.textContent = tag;
+      tagsTd.appendChild(chip);
+    });
+    tr.appendChild(tagsTd);
+    tbody.appendChild(tr);
+  });
+  el('tableEmptyState').style.display = rows.length === 0 ? 'block' : 'none';
+  document.querySelectorAll('#deviceTable th[data-key]').forEach(th => {
+    const arrow = th.querySelector('.sort-arrow');
+    arrow.textContent = th.dataset.key === state.sortKey ? (state.sortDir === 1 ? '▲' : '▼') : '';
+  });
+}
+document.querySelectorAll('#deviceTable th[data-key]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    if (state.sortKey === key) state.sortDir *= -1;
+    else { state.sortKey = key; state.sortDir = 1; }
+    render();
+  });
+});
+
+/* ---------------- Stat tiles ---------------- */
+function renderStats(filtered) {
+  el('statTotal').textContent = filtered.length;
+  el('statTypes').textContent = new Set(filtered.map(d => d.device_type)).size;
+  el('statWorkers').textContent = new Set(filtered.map(d => d.worker).filter(Boolean)).size;
+  el('statOwners').textContent = new Set(filtered.map(d => d.physical_owner).filter(Boolean)).size;
+}
+
+/* ---------------- Render ---------------- */
+function render() {
+  const filtered = getFiltered();
+  el('filterCount').textContent = `${filtered.length} / ${DEVICES.length} devices`;
+  renderStats(filtered);
+  renderLabLegend();
+  renderLabChart(filtered);
+  renderTypeChart(filtered);
+  renderTable(filtered);
+}
+
+el('footerCount').textContent = DEVICES.length;
+render();
+</script>
+</body>
+</html>
